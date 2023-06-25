@@ -3,25 +3,29 @@ import { useParams } from "react-router-dom";
 import { Crypto } from "../context/CryptoContext";
 import axios from "axios";
 import { SingleCoin } from "../config/api";
-import { LinearProgress, makeStyles, Typography } from "@material-ui/core";
+import {
+  Button,
+  LinearProgress,
+  makeStyles,
+  Typography,
+} from "@material-ui/core";
 import CoinInfo from "../components/CoinInfo";
-import ReactHtmlParser, {
-  processNodes,
-  convertNodeToElement,
-  htmlparser2,
-} from "react-html-parser";
+import ReactHtmlParser from "react-html-parser";
 import { numberWithCommas } from "../components/banner/Carousel";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
 const CoinPage = () => {
   const { id } = useParams();
-  const [coin, setCoin] = useState();
-  const { currency, symbol } = useContext(Crypto);
-  const fetchCoin = async () => {
-    const { data } = await axios.get(SingleCoin(id));
-    setCoin(data);
-  };
-  useEffect(() => {
-    fetchCoin();
-  }, [currency]);
+  // const [coin, setCoin] = useState();
+  const { currency, symbol, user, watchList, setAlert, setWatchList,coin } =
+    useContext(Crypto);
+  // const fetchCoin = async () => {
+  //   const { data } = await axios.get(SingleCoin(id));
+  //   setCoin(data);
+  // };
+  // useEffect(() => {
+  //   fetchCoin();
+  // }, [currency]);
   const useStyles = makeStyles((theme) => ({
     container: {
       display: "flex",
@@ -52,7 +56,7 @@ const CoinPage = () => {
       padding: 25,
       paddingBottom: 15,
       paddingTop: 0,
-      textAlign: "justify", 
+      textAlign: "justify",
     },
     marketData: {
       alignSelf: "start",
@@ -61,7 +65,8 @@ const CoinPage = () => {
       width: "100%",
       [theme.breakpoints.down("md")]: {
         display: "flex",
-        justifyContent: "space-around",
+        flexDirection: "column",
+        alignItems: "center",
       },
       [theme.breakpoints.down("sm")]: {
         flexDirection: "column",
@@ -73,7 +78,65 @@ const CoinPage = () => {
     },
   }));
   const classes = useStyles();
+  const inWatchList = watchList.includes(coin?.id);
 
+  const addToWatchList = async () => {
+    const coinRef = doc(db, "watchList", user.uid);
+    try {
+      await setDoc(coinRef, {
+        coin: watchList ? [...watchList, coin?.id] : [coin.id],
+      });
+      setAlert({
+        open: true,
+        message: "Coin added to watchlist!",
+        type: "success",
+      });
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: `${error.message}`,
+        type: "error",
+      });
+    }
+  };
+const removeFromWatchList = async() =>{
+  const coinRef = doc(db, "watchList", user.uid);
+  try {
+    await setDoc(coinRef, {
+      coin: watchList.filter((watch)=> watch !== coin.id)},
+      {
+        merge:true
+      }
+    );
+    setAlert({
+      open: true,
+      message: "Removed from  watchlist!",
+      type: "success",
+    });
+  } catch (error) {
+    setAlert({
+      open: true,
+      message: `${error.message}`,
+      type: "error",
+    });
+  }
+}
+
+  useEffect(() => {
+    if (user) {
+      const coinRef = doc(db, "watchList", user.uid);
+      var unSubsribe = onSnapshot(coinRef, (coin) => {
+        if (coin.exists()) {
+          setWatchList(coin.data().coin);
+        } else {
+          console.log("no items in the watchlist");
+        }
+      });
+      return () => {
+        unSubsribe();
+      };
+    }
+  }, [user]);
   if (!coin) return <LinearProgress style={{ backgroundClip: "gold" }} />;
   return (
     <div className={classes.container}>
@@ -97,7 +160,7 @@ const CoinPage = () => {
             </Typography>
             &nbsp; &nbsp;
             <Typography style={{ fontFamily: "Montserrat" }}>
-              { numberWithCommas(coin?.market_cap_rank)}
+              {numberWithCommas(coin?.market_cap_rank)}
             </Typography>
           </span>
           <span style={{ display: "flex" }}>
@@ -107,7 +170,9 @@ const CoinPage = () => {
             &nbsp; &nbsp;
             <Typography style={{ fontFamily: "Montserrat" }}>
               {symbol}
-              { numberWithCommas(coin?.market_data.current_price[currency.toLowerCase()])}
+              {numberWithCommas(
+                coin?.market_data.current_price[currency.toLowerCase()]
+              )}
             </Typography>
           </span>
           <span style={{ display: "flex" }}>
@@ -117,18 +182,32 @@ const CoinPage = () => {
             &nbsp; &nbsp;
             <Typography style={{ fontFamily: "Montserrat" }}>
               {symbol}
-              {numberWithCommas(coin?.market_data.market_cap[currency.toLowerCase()]
-              .toString()
-              .slice(0, -6)
+              {numberWithCommas(
+                coin?.market_data.market_cap[currency.toLowerCase()]
+                  .toString()
+                  .slice(0, -6)
               )}
               M
             </Typography>
           </span>
+          {user && (
+            <Button
+              variant="outlined"
+              style={{
+                width: "100%",
+                height: 40,
+                backgroundColor:inWatchList?"red": "#EEBC1D",
+              }}
+              onClick={ inWatchList? removeFromWatchList : addToWatchList}
+            >
+              {inWatchList ? "Remove From WatchList" : "Add to WatchList"}
+            </Button>
+          )}
         </div>
       </div>
-      <CoinInfo  coin={coin}/>
+      <CoinInfo coin={coin} />
     </div>
   );
 };
 
-export default CoinPage
+export default CoinPage;

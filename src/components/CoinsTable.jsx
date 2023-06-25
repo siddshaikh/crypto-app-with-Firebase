@@ -17,7 +17,7 @@ import {
   TableBody,
   makeStyles,
 } from "@material-ui/core";
-import { Navigate } from "react-router-dom";
+import {Navigate, useNavigate} from 'react-router-dom'
 import { numberWithCommas } from "./banner/Carousel";
 import {Pagination} from '@material-ui/lab'
 const useStyle = makeStyles(() => ({
@@ -72,6 +72,7 @@ const CoinsTable = () => {
     );
   };
   const classes = useStyle();
+  const navigate = useNavigate()
   return (
     <ThemeProvider theme={darkTheme}>
       <Container style={{ textAlign: "center" }}>
@@ -117,7 +118,7 @@ const CoinsTable = () => {
                   const profit = row.price_change_percentage_24h > 0;
                   return (
                     <TableRow
-                      onClick={() => Navigate(`/coins/${row.id}`)}
+                      onClick={() => navigate(`/coins/${row.id}`)}
                       className={classes.row}
                       key={row.name}
                     >

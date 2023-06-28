@@ -24,7 +24,7 @@ export const CryptoContext = ({ children }) => {
   };
   useEffect(() => {
     fetchCoin();
-  }, [currency]);
+  }, []);
   
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {

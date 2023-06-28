@@ -16,16 +16,16 @@ import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 const CoinPage = () => {
   const { id } = useParams();
-  // const [coin, setCoin] = useState();
-  const { currency, symbol, user, watchList, setAlert, setWatchList,coin } =
+  const [coin, setCoin] = useState();
+  const { currency, symbol, user, watchList, setAlert, setWatchList} =
     useContext(Crypto);
-  // const fetchCoin = async () => {
-  //   const { data } = await axios.get(SingleCoin(id));
-  //   setCoin(data);
-  // };
-  // useEffect(() => {
-  //   fetchCoin();
-  // }, [currency]);
+  const fetchCoin = async () => {
+    const { data } = await axios.get(SingleCoin(id));
+    setCoin(data);
+  };
+  useEffect(() => {
+    fetchCoin();
+  }, [currency]);
   const useStyles = makeStyles((theme) => ({
     container: {
       display: "flex",

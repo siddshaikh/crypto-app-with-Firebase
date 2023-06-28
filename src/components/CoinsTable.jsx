@@ -65,13 +65,17 @@ const CoinsTable = () => {
   });
 
   const handleSearch = () => {
+    if(!search){
+      return coins
+    }
+    const searchTerm = search.toLowerCase()
     return coins.filter(
       (coin) =>
-        coin.name.toLowerCase().includes(search) ||
-        coin.symbol.toLowerCase().includes(search)
+        coin.name.toLowerCase().includes(searchTerm) ||
+        coin.symbol.toLowerCase().includes(searchTerm)
     );
   };
-  const classes = useStyle();
+  const classes = useStyle(); 
   const navigate = useNavigate()
   return (
     <ThemeProvider theme={darkTheme}>
